@@ -1,13 +1,28 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout
+<LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="180dp"
-    android:layout_height="180dp"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:gravity="center"
+    android:padding="6dp"
     android:background="@drawable/widget_background">
 
-    <AnalogClockView
-        android:id="@+id/analog_clock"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"/>
+    <ImageView
+        android:id="@+id/widget_clock_image"
+        android:layout_width="170dp"
+        android:layout_height="170dp"
+        android:scaleType="fitCenter"
+        android:contentDescription="এনালগ ঘড়ি" />
 
-</FrameLayout>
+    <TextView
+        android:id="@+id/widget_date"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="তারিখ"
+        android:textSize="13sp"
+        android:textColor="#FFFFFF"
+        android:gravity="center"
+        android:paddingTop="3dp" />
+
+</LinearLayout>
