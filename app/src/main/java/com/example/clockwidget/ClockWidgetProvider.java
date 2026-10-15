@@ -145,9 +145,6 @@ public class ClockWidgetProvider extends AppWidgetProvider {
         paint.setStyle(Paint.Style.FILL);
         canvas.drawCircle(center, center, radius + 5, paint);
 
-        // ঘড়ির ডায়াল
-        paint.setColor(Color.rgb(12, 70, 48));
-        canvas.drawCircle(center, center, radius, paint);
 
         // বাইরের সীমানা
         paint.setStyle(Paint.Style.STROKE);
@@ -216,10 +213,12 @@ public class ClockWidgetProvider extends AppWidgetProvider {
         drawHand(canvas, center, radius * 0.76f,
                 second * 6f, 3, Color.RED);
 
-        // মাঝখানের গোল অংশ
-        paint.setStyle(Paint.Style.FILL);
-        paint.setColor(Color.rgb(255, 215, 90));
-        canvas.drawCircle(center, center, 11, paint);
+        // স্বচ্ছ ব্যাকগ্রাউন্ডে শুধু গোল বৃত্ত
+paint.setColor(Color.WHITE);
+paint.setStyle(Paint.Style.STROKE);
+paint.setStrokeWidth(5);
+canvas.drawCircle(center, center, radius, paint);
+paint.setStyle(Paint.Style.FILL);
 
         paint.setColor(Color.WHITE);
         canvas.drawCircle(center, center, 5, paint);
