@@ -1,28 +1,36 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:gravity="center"
-    android:padding="6dp"
-    android:background="@drawable/widget_background">
+    android:background="@android:color/transparent"
+    android:padding="4dp">
 
     <ImageView
         android:id="@+id/widget_clock_image"
-        android:layout_width="170dp"
-        android:layout_height="170dp"
+        android:layout_width="wrap_content"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:adjustViewBounds="true"
         android:scaleType="fitCenter"
-        android:contentDescription="এনালগ ঘড়ি" />
+        android:background="@android:color/transparent"
+        android:contentDescription="@string/app_name" />
 
     <TextView
         android:id="@+id/widget_date"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="তারিখ"
-        android:textSize="13sp"
+        android:layout_marginTop="4dp"
         android:textColor="#FFFFFF"
-        android:gravity="center"
-        android:paddingTop="3dp" />
+        android:textSize="16sp"
+        android:textStyle="bold"
+        android:shadowColor="#000000"
+        android:shadowDx="1"
+        android:shadowDy="1"
+        android:shadowRadius="3"
+        android:background="@android:color/transparent" />
 
 </LinearLayout>
