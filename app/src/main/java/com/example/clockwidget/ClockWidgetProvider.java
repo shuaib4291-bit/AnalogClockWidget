@@ -28,7 +28,20 @@ public class ClockWidgetProvider extends AppWidgetProvider {
             "০", "১", "২", "৩", "৪", "৫", "৬", "৭", "৮", "৯"
     };
 
-    // ইংরেজি সংখ্যাকে বাংলায় রূপান্তর
+    // ইংরেজি সংখ্যাকে বাংলায় রূপান্তর (যেকোনো সংখ্যার জন্য)
+    private static String toBangla(int number) {
+        StringBuilder sb = new StringBuilder();
+        String s = String.valueOf(number);
+        for (char c : s.toCharArray()) {
+            if (c >= '0' && c <= '9') {
+                sb.append(BN_DIGITS[c - '0']);
+            } else {
+                sb.append(c);
+            }
+        }
+        return sb.toString();
+    }
+
     private static String toBangla(String input) {
         StringBuilder sb = new StringBuilder();
         for (char c : input.toCharArray()) {
@@ -80,7 +93,11 @@ public class ClockWidgetProvider extends AppWidgetProvider {
 
             updateAll(context);
 
-            if (ACTION_UPDATE.equals(action)) {
+            // প্রতি সেকেন্ডে আপডেট হলে বারবার schedule করা লাগবে না,
+            // AlarmManager নিজেই repeat করছে
+            if (Intent.ACTION_TIME_CHANGED.equals(action)
+                    || Intent.ACTION_TIMEZONE_CHANGED.equals(action)
+                    || Intent.ACTION_DATE_CHANGED.equals(action)) {
                 scheduleUpdates(context);
             }
         }
@@ -104,13 +121,16 @@ public class ClockWidgetProvider extends AppWidgetProvider {
                         Context.ALARM_SERVICE);
 
         if (alarmManager != null) {
-            long firstUpdate =
-                    System.currentTimeMillis() + 60_000L;
+            // প্রতি সেকেন্ডে আপডেট
+            long firstUpdate = System.currentTimeMillis() + 1_000L;
+            long interval = 1_000L;
 
+            // Android 6.0+ এ সঠিক সময়ে আপডেট পেতে setExact ব্যবহার করা ভালো,
+            // তবে Doze mode এ সমস্যা হতে পারে। এখানে setRepeating ব্যবহার করছি।
             alarmManager.setRepeating(
                     AlarmManager.RTC,
                     firstUpdate,
-                    60_000L,
+                    interval,
                     getUpdateIntent(context));
         }
     }
@@ -130,6 +150,11 @@ public class ClockWidgetProvider extends AppWidgetProvider {
                             context.getPackageName(),
                             R.layout.widget_clock);
 
+            // ★ ব্যাকগ্রাউন্ড সম্পূর্ণ স্বচ্ছ করা হচ্ছে ★
+            views.setInt(R.id.widget_root,
+                    "setBackgroundColor",
+                    Color.TRANSPARENT);
+
             views.setImageViewBitmap(
                     R.id.widget_clock_image,
                     drawClock());
@@ -144,12 +169,14 @@ public class ClockWidgetProvider extends AppWidgetProvider {
 
             views.setTextViewText(R.id.widget_date, dateBangla);
 
+            // তারিখের টেক্সট কালার সাদা
+            views.setTextColor(R.id.widget_date, Color.WHITE);
+
             manager.updateAppWidget(id, views);
         }
     }
 
     private Bitmap drawClock() {
-        // ঘড়ির আকার বড় করা হয়েছে
         final int size = 520;
         final float center = size / 2f;
         final float radius = 240f;
@@ -158,16 +185,15 @@ public class ClockWidgetProvider extends AppWidgetProvider {
                 size, size, Bitmap.Config.ARGB_8888);
 
         Canvas canvas = new Canvas(bitmap);
-        // স্বচ্ছ ব্যাকগ্রাউন্ড
+        // ★ সম্পূর্ণ স্বচ্ছ ব্যাকগ্রাউন্ড ★
         canvas.drawColor(Color.TRANSPARENT);
 
         Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
 
-        // ================= বাইরের বৃত্ত =================
-        // কোনো ব্যাকগ্রাউন্ড ফিল নেই, শুধু বর্ডার
+        // ============ বাইরের বৃত্ত ============
         paint.setStyle(Paint.Style.STROKE);
         paint.setStrokeWidth(6);
-        paint.setColor(Color.rgb(255, 215, 90)); // সোনালী রঙ
+        paint.setColor(Color.rgb(255, 215, 90));
         canvas.drawCircle(center, center, radius, paint);
 
         // ভেতরের হালকা বর্ডার
@@ -175,7 +201,7 @@ public class ClockWidgetProvider extends AppWidgetProvider {
         paint.setColor(Color.argb(120, 255, 255, 255));
         canvas.drawCircle(center, center, radius - 8, paint);
 
-        // ================= ৬০টি ছোট ছোট কাটা =================
+        // ============ ৬০টি ছোট কাটা ============
         for (int i = 0; i < 60; i++) {
             double angle = Math.toRadians(i * 6 - 90);
 
@@ -185,12 +211,10 @@ public class ClockWidgetProvider extends AppWidgetProvider {
             int color;
 
             if (i % 5 == 0) {
-                // ঘণ্টার দাগ - বড় ও সোনালী
                 inner = radius - 32;
                 strokeWidth = 5;
                 color = Color.rgb(255, 215, 90);
             } else {
-                // মিনিটের দাগ - ছোট ও সাদা
                 inner = radius - 22;
                 strokeWidth = 2;
                 color = Color.argb(180, 255, 255, 255);
@@ -208,7 +232,7 @@ public class ClockWidgetProvider extends AppWidgetProvider {
             canvas.drawLine(x1, y1, x2, y2, paint);
         }
 
-        // ================= বাংলা সংখ্যা (১-১২) =================
+        // ============ বাংলা সংখ্যা (১-১২) ============
         paint.setStyle(Paint.Style.FILL);
         paint.setColor(Color.WHITE);
         paint.setTextAlign(Paint.Align.CENTER);
@@ -224,32 +248,33 @@ public class ClockWidgetProvider extends AppWidgetProvider {
 
             float y = center
                     + (float) Math.sin(angle) * (radius - 70)
-                    + 13; // টেক্সট সেন্টারিং অ্যাডজাস্ট
+                    + 13;
 
-            canvas.drawText(BN_DIGITS[i % 10], x, y, paint);
+            // ★ সঠিক বাংলা সংখ্যা: ১ থেকে ১২ ★
+            canvas.drawText(toBangla(i), x, y, paint);
         }
 
         Calendar time = Calendar.getInstance();
 
-        int hour = time.get(Calendar.HOUR);
+        int hour = time.get(Calendar.HOUR);          // 0-11
         int minute = time.get(Calendar.MINUTE);
         int second = time.get(Calendar.SECOND);
 
-        // ================= ঘণ্টার কাঁটা =================
+        // ============ ঘণ্টার কাঁটা ============
         float hourAngle = hour * 30f + minute * 0.5f;
         drawHand(canvas, center, radius * 0.48f,
                 hourAngle, 14, Color.WHITE);
 
-        // ================= মিনিটের কাঁটা =================
+        // ============ মিনিটের কাঁটা ============
         float minuteAngle = minute * 6f + second * 0.1f;
         drawHand(canvas, center, radius * 0.68f,
                 minuteAngle, 9, Color.rgb(255, 215, 90));
 
-        // ================= সেকেন্ডের কাঁটা =================
+        // ============ সেকেন্ডের কাঁটা ============
         drawHand(canvas, center, radius * 0.78f,
                 second * 6f, 4, Color.RED);
 
-        // ================= কেন্দ্রের বিন্দু =================
+        // ============ কেন্দ্রের বিন্দু ============
         paint.setStyle(Paint.Style.FILL);
         paint.setColor(Color.WHITE);
         canvas.drawCircle(center, center, 9, paint);
